@@ -1,0 +1,138 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import api from "../api/client";
+import { DEVICE_TYPES, OS_TYPES, STATUSES, labelOf } from "../constants";
+import { useAuth } from "../auth/AuthContext";
+
+export default function DeviceDetailPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { canManage, isAdmin } = useAuth();
+  const [device, setDevice] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [error, setError] = useState("");
+
+  const load = async () => {
+    try {
+      const [d, h] = await Promise.all([
+        api.get(`/devices/${id}`),
+        api.get(`/devices/${id}/history`),
+      ]);
+      setDevice(d.data);
+      setHistory(h.data);
+    } catch (e) {
+      setError(e.response?.data?.detail || "Failed to load device");
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [id]);
+
+  const retire = async () => {
+    if (!confirm("Mark this device as retired?")) return;
+    await api.patch(`/devices/${id}`, { status: "retired" });
+    load();
+  };
+
+  const remove = async () => {
+    if (!confirm("Permanently delete this device?")) return;
+    await api.delete(`/devices/${id}`);
+    navigate("/devices");
+  };
+
+  if (error) return <p className="error">{error}</p>;
+  if (!device) return <p>Loading…</p>;
+
+  return (
+    <section className="page">
+      <div className="page-head">
+        <div>
+          <p className="eyebrow">{labelOf(DEVICE_TYPES, device.device_type)}</p>
+          <h1>{device.device_name}</h1>
+          <p className="lede">{device.device_nickname}</p>
+        </div>
+        <div className="actions">
+          {canManage && (
+            <Link className="btn secondary" to={`/devices/${id}/edit`}>
+              Edit
+            </Link>
+          )}
+          {canManage && device.status !== "retired" && (
+            <button className="btn ghost" type="button" onClick={retire}>
+              Retire
+            </button>
+          )}
+          {isAdmin && (
+            <button className="btn danger" type="button" onClick={remove}>
+              Delete
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid-2">
+        <div className="panel">
+          <h2>Details</h2>
+          <ul className="kv-list">
+            <li>
+              <span>Status</span>
+              <strong>{labelOf(STATUSES, device.status)}</strong>
+            </li>
+            <li>
+              <span>OS</span>
+              <strong>
+                {labelOf(OS_TYPES, device.os_type)} {device.os_version}
+              </strong>
+            </li>
+            <li>
+              <span>Cellular</span>
+              <strong>{device.is_cellular ? "Yes" : "No"}</strong>
+            </li>
+            <li>
+              <span>IMEI</span>
+              <strong>{device.imei_number || "—"}</strong>
+            </li>
+            <li>
+              <span>Serial</span>
+              <strong>{device.serial_number}</strong>
+            </li>
+            <li>
+              <span>MAC</span>
+              <strong>{device.mac_address}</strong>
+            </li>
+            <li>
+              <span>Company</span>
+              <strong>{device.company}</strong>
+            </li>
+            <li>
+              <span>Assigned to</span>
+              <strong>{device.assigned_user?.full_name || "Unassigned"}</strong>
+            </li>
+            <li>
+              <span>Purchase date</span>
+              <strong>{device.purchase_date || "—"}</strong>
+            </li>
+          </ul>
+        </div>
+        <div className="panel">
+          <h2>Assignment history</h2>
+          {!history.length && <p className="muted">No assignment changes yet.</p>}
+          <ul className="timeline">
+            {history.map((h) => (
+              <li key={h.id}>
+                <strong>
+                  {h.from_user?.full_name || "Unassigned"} → {h.to_user?.full_name || "Unassigned"}
+                </strong>
+                <span>
+                  by {h.changed_by_user?.full_name || "Unknown"} ·{" "}
+                  {new Date(h.created_at).toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}

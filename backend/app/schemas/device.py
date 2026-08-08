@@ -1,0 +1,151 @@
+import re
+from datetime import date, datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from app.models.enums import DeviceStatus, DeviceType, OsType
+from app.schemas.user import UserBrief
+
+MAC_RE = re.compile(r"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$")
+IMEI_RE = re.compile(r"^\d{15}$")
+
+
+class DeviceBase(BaseModel):
+    device_name: str = Field(min_length=1, max_length=255)
+    device_nickname: str = Field(min_length=1, max_length=255)
+    device_type: DeviceType
+    os_type: OsType
+    os_version: str = Field(min_length=1, max_length=50)
+    is_cellular: bool = False
+    imei_number: str | None = None
+    serial_number: str = Field(min_length=1, max_length=255)
+    mac_address: str = Field(min_length=17, max_length=17)
+    company: str = Field(min_length=1, max_length=255)
+    assigned_user_id: UUID | None = None
+    status: DeviceStatus = DeviceStatus.active
+    purchase_date: date | None = None
+
+    @field_validator("mac_address")
+    @classmethod
+    def normalize_mac(cls, v: str) -> str:
+        v = v.strip().upper()
+        if not MAC_RE.match(v):
+            raise ValueError("mac_address must match XX:XX:XX:XX:XX:XX")
+        return v
+
+    @field_validator("imei_number")
+    @classmethod
+    def validate_imei_format(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        v = v.strip()
+        if not IMEI_RE.match(v):
+            raise ValueError("imei_number must be exactly 15 digits")
+        return v
+
+    @model_validator(mode="after")
+    def require_imei_if_cellular(self):
+        if self.is_cellular and not self.imei_number:
+            raise ValueError("imei_number is required when is_cellular is true")
+        if not self.is_cellular and self.imei_number:
+            raise ValueError("imei_number must be empty when is_cellular is false")
+        return self
+
+
+class DeviceCreate(DeviceBase):
+    pass
+
+
+class DeviceUpdate(BaseModel):
+    device_name: str | None = Field(default=None, min_length=1, max_length=255)
+    device_nickname: str | None = Field(default=None, min_length=1, max_length=255)
+    device_type: DeviceType | None = None
+    os_type: OsType | None = None
+    os_version: str | None = Field(default=None, min_length=1, max_length=50)
+    is_cellular: bool | None = None
+    imei_number: str | None = None
+    serial_number: str | None = Field(default=None, min_length=1, max_length=255)
+    mac_address: str | None = Field(default=None, min_length=17, max_length=17)
+    company: str | None = Field(default=None, min_length=1, max_length=255)
+    assigned_user_id: UUID | None = None
+    status: DeviceStatus | None = None
+    purchase_date: date | None = None
+    clear_assigned_user: bool = False
+    clear_imei: bool = False
+    clear_purchase_date: bool = False
+
+    @field_validator("mac_address")
+    @classmethod
+    def normalize_mac(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip().upper()
+        if not MAC_RE.match(v):
+            raise ValueError("mac_address must match XX:XX:XX:XX:XX:XX")
+        return v
+
+    @field_validator("imei_number")
+    @classmethod
+    def validate_imei_format(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        v = v.strip()
+        if not IMEI_RE.match(v):
+            raise ValueError("imei_number must be exactly 15 digits")
+        return v
+
+
+class DeviceRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    device_name: str
+    device_nickname: str
+    device_type: DeviceType
+    os_type: OsType
+    os_version: str
+    is_cellular: bool
+    imei_number: str | None
+    serial_number: str
+    mac_address: str
+    company: str
+    assigned_user_id: UUID | None
+    status: DeviceStatus
+    purchase_date: date | None
+    created_at: datetime
+    updated_at: datetime
+    assigned_user: UserBrief | None = None
+
+
+class AssignmentHistoryRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    device_id: UUID
+    from_user_id: UUID | None
+    to_user_id: UUID | None
+    changed_by: UUID
+    created_at: datetime
+    from_user: UserBrief | None = None
+    to_user: UserBrief | None = None
+    changed_by_user: UserBrief | None = None
+
+
+class DashboardSummary(BaseModel):
+    total_devices: int
+    unassigned_devices: int
+    by_status: dict[str, int]
+    by_os: dict[str, int]
+    by_type: dict[str, int]
+
+
+class ImportRowError(BaseModel):
+    row: int
+    error: str
+
+
+class ImportResult(BaseModel):
+    created: int
+    failed: int
+    errors: list[ImportRowError]
