@@ -7,3 +7,5 @@ dist/
 .DS_Store
 pgdata/
 *.log
+backend/*.db
+backend/device_inventory.db
