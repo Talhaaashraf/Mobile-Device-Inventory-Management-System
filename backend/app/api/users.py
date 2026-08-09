@@ -1,11 +1,13 @@
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import AdminUser, DbSession, ManagerOrAdmin
 from app.core.security import hash_password
+from app.models.assignment import AssignmentHistory
+from app.models.device import Device
 from app.models.user import User
 from app.schemas.user import UserBrief, UserCreate, UserRead, UserUpdate
 
@@ -68,3 +70,43 @@ def update_user(user_id: UUID, payload: UserUpdate, db: DbSession, _: AdminUser)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
     db.refresh(user)
     return user
+
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(user_id: UUID, db: DbSession, current_admin: AdminUser) -> None:
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if user.id == current_admin.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot delete your own account")
+
+    # Clear device assignments pointing at this user
+    db.execute(
+        update(Device).where(Device.assigned_user_id == user_id).values(assigned_user_id=None)
+    )
+    # assignment_history.changed_by is RESTRICT — reassign to the acting admin
+    db.execute(
+        update(AssignmentHistory)
+        .where(AssignmentHistory.changed_by == user_id)
+        .values(changed_by=current_admin.id)
+    )
+    db.execute(
+        update(AssignmentHistory)
+        .where(AssignmentHistory.from_user_id == user_id)
+        .values(from_user_id=None)
+    )
+    db.execute(
+        update(AssignmentHistory)
+        .where(AssignmentHistory.to_user_id == user_id)
+        .values(to_user_id=None)
+    )
+
+    db.delete(user)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User cannot be deleted because related records still reference them",
+        )

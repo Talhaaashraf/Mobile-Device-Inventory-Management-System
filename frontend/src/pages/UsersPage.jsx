@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/client";
+import { useAuth } from "../auth/AuthContext";
 import { ROLES, labelOf } from "../constants";
 
 const blank = {
@@ -11,6 +12,7 @@ const blank = {
 };
 
 export default function UsersPage() {
+  const { user: me } = useAuth();
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState(blank);
   const [error, setError] = useState("");
@@ -43,8 +45,30 @@ export default function UsersPage() {
   };
 
   const toggleActive = async (user) => {
-    await api.patch(`/users/${user.id}`, { is_active: !user.is_active });
-    load();
+    setError("");
+    try {
+      await api.patch(`/users/${user.id}`, { is_active: !user.is_active });
+      load();
+    } catch (err) {
+      setError(err.response?.data?.detail || "Update failed");
+    }
+  };
+
+  const deleteUser = async (user) => {
+    if (user.id === me?.id) {
+      setError("You cannot delete your own account");
+      return;
+    }
+    if (!confirm(`Permanently delete ${user.full_name} (${user.email})?`)) return;
+    setError("");
+    setMessage("");
+    try {
+      await api.delete(`/users/${user.id}`);
+      setMessage(`Deleted ${user.full_name}`);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.detail || "Delete failed");
+    }
   };
 
   return (
@@ -102,7 +126,7 @@ export default function UsersPage() {
                   <th>Role</th>
                   <th>Dept</th>
                   <th>Active</th>
-                  <th />
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -116,9 +140,16 @@ export default function UsersPage() {
                     <td>{u.department}</td>
                     <td>{u.is_active ? "Yes" : "No"}</td>
                     <td>
-                      <button className="btn ghost" type="button" onClick={() => toggleActive(u)}>
-                        {u.is_active ? "Deactivate" : "Activate"}
-                      </button>
+                      <div className="actions">
+                        <button className="btn ghost" type="button" onClick={() => toggleActive(u)}>
+                          {u.is_active ? "Deactivate" : "Activate"}
+                        </button>
+                        {u.id !== me?.id && (
+                          <button className="btn danger" type="button" onClick={() => deleteUser(u)}>
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
