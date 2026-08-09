@@ -183,6 +183,7 @@ def update_device(
     clear_assigned = data.pop("clear_assigned_user", False)
     clear_imei = data.pop("clear_imei", False)
     clear_purchase = data.pop("clear_purchase_date", False)
+    clear_return = data.pop("clear_date_of_return", False)
 
     if clear_assigned:
         data["assigned_user_id"] = None
@@ -190,11 +191,14 @@ def update_device(
         data["imei_number"] = None
     if clear_purchase:
         data["purchase_date"] = None
+    if clear_return:
+        data["date_of_return"] = None
 
     if "assigned_user_id" in data:
         _validate_assigned_user(db, data["assigned_user_id"])
 
     old_assignee = device.assigned_user_id
+    old_issued_to = device.issued_to
     new_is_cellular = data.get("is_cellular", device.is_cellular)
     new_imei = data.get("imei_number", device.imei_number)
     if clear_imei:
@@ -211,6 +215,25 @@ def update_device(
                 from_user_id=old_assignee,
                 to_user_id=data["assigned_user_id"],
                 changed_by=current_user.id,
+            )
+        )
+
+    if "issued_to" in data and data["issued_to"] != old_issued_to:
+        db.add(
+            AssignmentHistory(
+                device_id=device.id,
+                from_user_id=old_assignee,
+                to_user_id=device.assigned_user_id,
+                changed_by=current_user.id,
+                from_issued_to=old_issued_to,
+                to_issued_to=data["issued_to"],
+                project_name=device.project_name,
+                project_manager=device.project_manager,
+                division=device.division,
+                resident_location=device.resident_location,
+                audit_status=device.audit_status,
+                date_of_return=device.date_of_return,
+                notes=device.notes,
             )
         )
 

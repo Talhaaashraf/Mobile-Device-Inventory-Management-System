@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../api/client";
-import { DEVICE_TYPES, OS_TYPES, STATUSES } from "../constants";
+import { AUDIT_STATUSES, DEVICE_TYPES, OS_TYPES, STATUSES } from "../constants";
 
 const blank = {
   device_name: "",
@@ -9,6 +9,13 @@ const blank = {
   device_type: "phone",
   os_type: "ios",
   os_version: "",
+  audit_status: "pending_audit",
+  resident_location: "",
+  division: "",
+  issued_to: "",
+  project_manager: "",
+  project_name: "",
+  date_of_return: "",
   is_cellular: true,
   imei_number: "",
   serial_number: "",
@@ -41,6 +48,13 @@ export default function DeviceFormPage() {
             device_type: d.device_type,
             os_type: d.os_type,
             os_version: d.os_version,
+            audit_status: d.audit_status || "pending_audit",
+            resident_location: d.resident_location || "",
+            division: d.division || "",
+            issued_to: d.issued_to || "",
+            project_manager: d.project_manager || "",
+            project_name: d.project_name || "",
+            date_of_return: d.date_of_return || "",
             is_cellular: d.is_cellular,
             imei_number: d.imei_number || "",
             serial_number: d.serial_number,
@@ -86,6 +100,13 @@ export default function DeviceFormPage() {
       ...form,
       imei_number: form.is_cellular ? form.imei_number : null,
       assigned_user_id: form.assigned_user_id || null,
+      audit_status: form.audit_status || null,
+      resident_location: form.resident_location || null,
+      division: form.division || null,
+      issued_to: form.issued_to || null,
+      project_manager: form.project_manager || null,
+      project_name: form.project_name || null,
+      date_of_return: form.date_of_return || null,
       purchase_date: form.purchase_date || null,
     };
 
@@ -95,6 +116,7 @@ export default function DeviceFormPage() {
         if (!form.assigned_user_id) body.clear_assigned_user = true;
         if (!form.is_cellular) body.clear_imei = true;
         if (!form.purchase_date) body.clear_purchase_date = true;
+        if (!form.date_of_return) body.clear_date_of_return = true;
         await api.patch(`/devices/${id}`, body);
         navigate(`/devices/${id}`);
       } else {
@@ -124,7 +146,7 @@ export default function DeviceFormPage() {
           <input name="device_name" value={form.device_name} onChange={onChange} required />
         </label>
         <label>
-          Nickname
+          Name / AKA
           <input name="device_nickname" value={form.device_nickname} onChange={onChange} required />
         </label>
         <label>
@@ -151,6 +173,16 @@ export default function DeviceFormPage() {
           OS version
           <input name="os_version" value={form.os_version} onChange={onChange} required />
         </label>
+        <label>
+          Audit status
+          <select name="audit_status" value={form.audit_status} onChange={onChange}>
+            {AUDIT_STATUSES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="checkbox">
           <input name="is_cellular" type="checkbox" checked={form.is_cellular} onChange={onChange} />
           Cellular capable (IMEI required)
@@ -162,7 +194,7 @@ export default function DeviceFormPage() {
           </label>
         )}
         <label>
-          Serial number
+          Company Serial
           <input name="serial_number" value={form.serial_number} onChange={onChange} required />
         </label>
         <label>
@@ -178,6 +210,30 @@ export default function DeviceFormPage() {
         <label>
           Company
           <input name="company" value={form.company} onChange={onChange} required />
+        </label>
+        <label>
+          Issued to (Engineer Name)
+          <input name="issued_to" value={form.issued_to} onChange={onChange} />
+        </label>
+        <label>
+          Resident location
+          <input name="resident_location" value={form.resident_location} onChange={onChange} />
+        </label>
+        <label>
+          Division
+          <input name="division" value={form.division} onChange={onChange} />
+        </label>
+        <label>
+          Project manager
+          <input name="project_manager" value={form.project_manager} onChange={onChange} />
+        </label>
+        <label>
+          Project name
+          <input name="project_name" value={form.project_name} onChange={onChange} />
+        </label>
+        <label>
+          Date of return
+          <input type="date" name="date_of_return" value={form.date_of_return} onChange={onChange} />
         </label>
         <label>
           Assigned user

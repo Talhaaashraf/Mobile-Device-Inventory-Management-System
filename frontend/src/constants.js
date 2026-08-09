@@ -19,6 +19,12 @@ export const STATUSES = [
   { value: "lost", label: "Lost" },
 ];
 
+export const AUDIT_STATUSES = [
+  { value: "pending_audit", label: "Pending audit" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "disputed", label: "Disputed" },
+];
+
 export const ROLES = [
   { value: "admin", label: "Admin" },
   { value: "manager", label: "Manager" },

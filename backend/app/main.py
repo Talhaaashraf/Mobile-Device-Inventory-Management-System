@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth, devices, users
 from app.core.config import settings
 from app.db.base import Base
+from app.db.migrate_sqlite import ensure_sqlite_device_columns
 from app.db.seed import seed_database
 from app.db.session import SessionLocal, engine
 import app.models  # noqa: F401
@@ -15,6 +16,7 @@ import app.models  # noqa: F401
 async def lifespan(_: FastAPI):
     if settings.DATABASE_URL.startswith("sqlite"):
         Base.metadata.create_all(bind=engine)
+        ensure_sqlite_device_columns()
     if settings.SEED_ON_STARTUP:
         db = SessionLocal()
         try:

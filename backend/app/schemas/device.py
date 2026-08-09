@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.models.enums import DeviceStatus, DeviceType, OsType
+from app.models.enums import AuditStatus, DeviceStatus, DeviceType, OsType
 from app.schemas.user import UserBrief
 
 MAC_RE = re.compile(r"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$")
@@ -24,6 +24,14 @@ class DeviceBase(BaseModel):
     company: str = Field(min_length=1, max_length=255)
     assigned_user_id: UUID | None = None
     status: DeviceStatus = DeviceStatus.active
+    audit_status: AuditStatus = AuditStatus.pending_audit
+    resident_location: str | None = None
+    division: str | None = None
+    issued_to: str | None = None
+    project_manager: str | None = None
+    project_name: str | None = None
+    date_of_return: date | None = None
+    notes: str | None = None
     purchase_date: date | None = None
 
     @field_validator("mac_address")
@@ -70,10 +78,19 @@ class DeviceUpdate(BaseModel):
     company: str | None = Field(default=None, min_length=1, max_length=255)
     assigned_user_id: UUID | None = None
     status: DeviceStatus | None = None
+    audit_status: AuditStatus | None = None
+    resident_location: str | None = None
+    division: str | None = None
+    issued_to: str | None = None
+    project_manager: str | None = None
+    project_name: str | None = None
+    date_of_return: date | None = None
+    notes: str | None = None
     purchase_date: date | None = None
     clear_assigned_user: bool = False
     clear_imei: bool = False
     clear_purchase_date: bool = False
+    clear_date_of_return: bool = False
 
     @field_validator("mac_address")
     @classmethod
@@ -112,6 +129,14 @@ class DeviceRead(BaseModel):
     company: str
     assigned_user_id: UUID | None
     status: DeviceStatus
+    audit_status: AuditStatus = AuditStatus.pending_audit
+    resident_location: str | None = None
+    division: str | None = None
+    issued_to: str | None = None
+    project_manager: str | None = None
+    project_name: str | None = None
+    date_of_return: date | None = None
+    notes: str | None = None
     purchase_date: date | None
     created_at: datetime
     updated_at: datetime
@@ -126,6 +151,15 @@ class AssignmentHistoryRead(BaseModel):
     from_user_id: UUID | None
     to_user_id: UUID | None
     changed_by: UUID
+    from_issued_to: str | None = None
+    to_issued_to: str | None = None
+    project_name: str | None = None
+    project_manager: str | None = None
+    division: str | None = None
+    resident_location: str | None = None
+    audit_status: str | None = None
+    date_of_return: date | None = None
+    notes: str | None = None
     created_at: datetime
     from_user: UserBrief | None = None
     to_user: UserBrief | None = None

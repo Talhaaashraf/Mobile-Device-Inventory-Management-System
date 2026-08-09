@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/client";
-import { DEVICE_TYPES, OS_TYPES, STATUSES, labelOf } from "../constants";
+import { AUDIT_STATUSES, DEVICE_TYPES, OS_TYPES, STATUSES, labelOf } from "../constants";
 import { useAuth } from "../auth/AuthContext";
 
 const emptyFilters = {
@@ -113,10 +113,12 @@ export default function DevicesPage() {
         <div className="panel import-hint">
           <strong>CSV columns:</strong> device_name, device_nickname, device_type, os_type,
           os_version, is_cellular, imei_number, serial_number, mac_address, company, status,
-          purchase_date, assigned_user_email
+          audit_status, resident_location, division, issued_to, project_manager, project_name,
+          date_of_return, purchase_date, assigned_user_email
           <div className="muted">
             device_type: phone | tablet_ipad | tablet_android | smartwatch · os_type: ios | android |
-            watchos | wear_os · is_cellular: true/false · IMEI required only when cellular is true
+            watchos | wear_os · is_cellular: true/false · audit_status: pending_audit | confirmed |
+            disputed · date_of_return / purchase_date: YYYY-MM-DD
           </div>
         </div>
       )}
@@ -175,6 +177,9 @@ export default function DevicesPage() {
                 <th>Name</th>
                 <th>Type</th>
                 <th>OS</th>
+                <th>Issued</th>
+                <th>Division</th>
+                <th>Audit</th>
                 <th>Status</th>
                 <th>Assigned</th>
                 <th>Company</th>
@@ -191,6 +196,9 @@ export default function DevicesPage() {
                   <td>
                     {labelOf(OS_TYPES, d.os_type)} {d.os_version}
                   </td>
+                  <td>{d.issued_to || "—"}</td>
+                  <td>{d.division || "—"}</td>
+                  <td>{labelOf(AUDIT_STATUSES, d.audit_status) || d.audit_status || "—"}</td>
                   <td>
                     <span className={`pill status-${d.status}`}>{labelOf(STATUSES, d.status)}</span>
                   </td>
@@ -200,7 +208,7 @@ export default function DevicesPage() {
               ))}
               {!devices.length && (
                 <tr>
-                  <td colSpan={6}>No devices match these filters.</td>
+                  <td colSpan={9}>No devices match these filters.</td>
                 </tr>
               )}
             </tbody>

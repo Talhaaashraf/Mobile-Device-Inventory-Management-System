@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import api from "../api/client";
-import { DEVICE_TYPES, OS_TYPES, STATUSES, labelOf } from "../constants";
+import { AUDIT_STATUSES, DEVICE_TYPES, OS_TYPES, STATUSES, labelOf } from "../constants";
 import { useAuth } from "../auth/AuthContext";
 
 export default function DeviceDetailPage() {
@@ -86,6 +86,10 @@ export default function DeviceDetailPage() {
               </strong>
             </li>
             <li>
+              <span>Audit status</span>
+              <strong>{labelOf(AUDIT_STATUSES, device.audit_status) || device.audit_status || "—"}</strong>
+            </li>
+            <li>
               <span>Cellular</span>
               <strong>{device.is_cellular ? "Yes" : "No"}</strong>
             </li>
@@ -94,7 +98,7 @@ export default function DeviceDetailPage() {
               <strong>{device.imei_number || "—"}</strong>
             </li>
             <li>
-              <span>Serial</span>
+              <span>Company Serial</span>
               <strong>{device.serial_number}</strong>
             </li>
             <li>
@@ -104,6 +108,30 @@ export default function DeviceDetailPage() {
             <li>
               <span>Company</span>
               <strong>{device.company}</strong>
+            </li>
+            <li>
+              <span>Issued to</span>
+              <strong>{device.issued_to || "—"}</strong>
+            </li>
+            <li>
+              <span>Resident location</span>
+              <strong>{device.resident_location || "—"}</strong>
+            </li>
+            <li>
+              <span>Division</span>
+              <strong>{device.division || "—"}</strong>
+            </li>
+            <li>
+              <span>Project manager</span>
+              <strong>{device.project_manager || "—"}</strong>
+            </li>
+            <li>
+              <span>Project name</span>
+              <strong>{device.project_name || "—"}</strong>
+            </li>
+            <li>
+              <span>Date of return</span>
+              <strong>{device.date_of_return || "—"}</strong>
             </li>
             <li>
               <span>Assigned to</span>

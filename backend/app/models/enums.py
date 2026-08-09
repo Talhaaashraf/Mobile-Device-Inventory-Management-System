@@ -26,3 +26,9 @@ class DeviceStatus(str, enum.Enum):
     in_repair = "in_repair"
     retired = "retired"
     lost = "lost"
+
+
+class AuditStatus(str, enum.Enum):
+    confirmed = "confirmed"
+    pending_audit = "pending_audit"
+    disputed = "disputed"

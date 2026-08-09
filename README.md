@@ -6,28 +6,26 @@ Full-stack inventory tracker for company phones, tablets, and smartwatches.
 
 - **Frontend:** React (Vite) + React Router + Axios
 - **Backend:** FastAPI + SQLAlchemy + Alembic
-- **Database:** PostgreSQL 16
+- **Database:** SQLite (local)
 - **Auth:** JWT access + refresh tokens with RBAC (`admin`, `manager`, `viewer`)
-- **Runtime:** Docker Compose
+- **Runtime:** Local development with `start-local.bat`
 
-## Quick start (Docker)
+## Quick start (Windows)
 
-```bash
+Use the provided local startup helper or start the backend and frontend manually.
+
+### Local startup script
+
+Double-click `start-local.bat` or run it from PowerShell:
+
+```powershell
 cd device-inventory
-docker compose up --build
+start-local.bat
 ```
 
-- Frontend: http://localhost:3000
-- API docs: http://localhost:8000/docs
-- Health: http://localhost:8000/health
+### Manual startup
 
-Migrations run automatically on backend startup. Seed data is loaded once if the admin user does not exist.
-
-## Quick start (no Docker — Windows)
-
-If Docker Desktop is not installed, double-click `start-local.bat` or run:
-
-```bash
+```powershell
 # Terminal 1 — backend (SQLite)
 cd backend
 set DATABASE_URL=sqlite:///./device_inventory.db
@@ -37,7 +35,7 @@ set CORS_ORIGINS=http://localhost:3000
 # Terminal 2 — frontend
 cd frontend
 set VITE_API_URL=http://localhost:8000
-npm run dev -- --port 3000
+npm run dev -- --port 3000 --host
 ```
 
 Then open http://localhost:3000
@@ -53,7 +51,7 @@ Required columns:
 
 `device_name,device_nickname,device_type,os_type,os_version,is_cellular,serial_number,mac_address,company`
 
-Optional: `imei_number`, `status`, `purchase_date` (YYYY-MM-DD), `assigned_user_email`
+Optional: `imei_number`, `status`, `audit_status`, `resident_location`, `division`, `issued_to`, `project_manager`, `project_name`, `date_of_return`, `purchase_date` (YYYY-MM-DD), `assigned_user_email`
 
 API: `POST /api/devices/import` (multipart form field `file`)
 
@@ -74,9 +72,10 @@ cd backend
 python -m venv .venv
 # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-# Point DATABASE_URL at a local Postgres instance
-alembic upgrade head
-uvicorn app.main:app --reload --port 8000
+set DATABASE_URL=sqlite:///./device_inventory.db
+set CORS_ORIGINS=http://localhost:3000
+set SEED_ON_STARTUP=true
+.venv\Scripts\uvicorn.exe app.main:app --reload --port 8000
 ```
 
 ### Frontend

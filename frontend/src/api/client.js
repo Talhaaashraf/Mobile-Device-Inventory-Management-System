@@ -29,13 +29,16 @@ api.interceptors.response.use(
     original._retry = true;
     try {
       if (!refreshing) {
-        refreshing = axios.post(`${API_URL}/api/auth/refresh`, { refresh_token: refresh }).then((r) => {
-          localStorage.setItem("access_token", r.data.access_token);
-          localStorage.setItem("refresh_token", r.data.refresh_token);
-          return r.data.access_token;
-        }).finally(() => {
-          refreshing = null;
-        });
+        refreshing = axios
+          .post(`${API_URL}/api/auth/refresh`, { refresh_token: refresh })
+          .then((r) => {
+            localStorage.setItem("access_token", r.data.access_token);
+            localStorage.setItem("refresh_token", r.data.refresh_token);
+            return r.data.access_token;
+          })
+          .finally(() => {
+            refreshing = null;
+          });
       }
       const token = await refreshing;
       original.headers.Authorization = `Bearer ${token}`;

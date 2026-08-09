@@ -1,11 +1,11 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, String, Uuid, func
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, String, Text, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.models.enums import DeviceStatus, DeviceType, OsType
+from app.models.enums import AuditStatus, DeviceStatus, DeviceType, OsType
 
 
 class Device(Base):
@@ -28,6 +28,18 @@ class Device(Base):
     status: Mapped[DeviceStatus] = mapped_column(
         Enum(DeviceStatus, name="device_status"), nullable=False, default=DeviceStatus.active
     )
+    audit_status: Mapped[AuditStatus] = mapped_column(
+        Enum(AuditStatus, name="audit_status"),
+        nullable=False,
+        default=AuditStatus.pending_audit,
+    )
+    resident_location: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    division: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    issued_to: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    project_manager: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    project_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    date_of_return: Mapped[date | None] = mapped_column(Date, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     purchase_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

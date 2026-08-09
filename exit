@@ -1,0 +1,17 @@
+[33mcommit 9d2651448aa13c587412e0e000655fd4c4d58b1e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Talhaashraf <talhaashraf814@gmail.com>
+Date:   Sun Aug 9 17:25:44 2026 +0500
+
+    chore: stop tracking local sqlite db, add gitignore rules
+
+[33mcommit 0622c0d3beaa9e720491dd79b327471e57605646[m
+Author: Talhaashraf <talhaashraf814@gmail.com>
+Date:   Sun Aug 9 05:03:29 2026 +0500
+
+    user add del function done
+
+[33mcommit 185067bf6cd9610eb7f85219e6941dbc993ff190[m
+Author: Talhaashraf <talhaashraf814@gmail.com>
+Date:   Sun Aug 9 04:31:32 2026 +0500
+
+    firt check of app
