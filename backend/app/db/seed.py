@@ -12,7 +12,9 @@ from app.models.user import User
 def seed_database(db: Session) -> None:
     existing = db.scalar(select(User).where(User.email == "admin@company.com"))
     if existing:
+        seed_management_data(db)
         return
+
 
     admin = User(
         full_name="System Admin",
@@ -150,3 +152,95 @@ def seed_database(db: Session) -> None:
     ]
     db.add_all(devices)
     db.commit()
+
+    seed_management_data(db)
+
+
+def seed_management_data(db: Session) -> None:
+    from datetime import date, timedelta
+    from app.models.device_request import DeviceRequest
+    from app.models.maintenance import MaintenanceTicket
+    from app.models.audit import AuditLog
+    from app.models.enums import RequestStatus, MaintenanceStatus, MaintenancePriority, PhysicalAuditStatus, AuditStatus
+
+    # Check if requests exist
+    if not db.scalar(select(DeviceRequest)):
+        viewer = db.scalar(select(User).where(User.email == "viewer@company.com"))
+        manager = db.scalar(select(User).where(User.email == "manager@company.com"))
+        admin = db.scalar(select(User).where(User.email == "admin@company.com"))
+        devices = db.scalars(select(Device)).all()
+
+        if viewer and manager and devices:
+            req1 = DeviceRequest(
+                user_id=viewer.id,
+                device_type=DeviceType.phone,
+                os_preference=OsType.ios,
+                project_name="Mobile Banking App",
+                division="QA & Testing",
+                reason="Need an iOS test phone for biometric auth testing",
+                duration_days=14,
+                date_needed=date.today(),
+                status=RequestStatus.pending,
+            )
+            req2 = DeviceRequest(
+                user_id=manager.id,
+                device_type=DeviceType.tablet_android,
+                os_preference=OsType.android,
+                project_name="Field Operations",
+                division="Operations",
+                reason="Tablet needed for on-site client demonstrations",
+                duration_days=30,
+                date_needed=date.today() - timedelta(days=2),
+                status=RequestStatus.approved,
+                manager_notes="Approved for Q3 client visits.",
+                reviewed_by_id=admin.id if admin else None,
+            )
+            db.add_all([req1, req2])
+
+            # Ensure device return dates for demo
+            if len(devices) > 0:
+                devices[0].date_of_return = date.today() - timedelta(days=3)  # Overdue
+                devices[0].division = "Engineering"
+                devices[0].project_name = "Core Mobile App"
+                devices[0].issued_to = "Sara Manager"
+                devices[0].resident_location = "Karachi HQ - Lab 1"
+            if len(devices) > 2:
+                devices[2].date_of_return = date.today() + timedelta(days=4)  # Due soon
+                devices[2].division = "UI/UX Design"
+                devices[2].project_name = "Design System"
+                devices[2].issued_to = "View Only"
+                devices[2].resident_location = "Lahore Office"
+
+            # Seed maintenance ticket
+            repair_device = next((d for d in devices if d.status == DeviceStatus.in_repair), devices[0])
+            m_ticket = MaintenanceTicket(
+                device_id=repair_device.id,
+                reported_by_id=manager.id,
+                issue_title="Screen flicker and damaged charging port",
+                issue_description="Screen intermittently blinks when tilted; USB-C port is loose.",
+                priority=MaintenancePriority.high,
+                repair_status=MaintenanceStatus.in_repair,
+                vendor_name="TechFix Solutions",
+                estimated_cost=120.0,
+                sent_date=date.today() - timedelta(days=5),
+            )
+            db.add(m_ticket)
+
+            # Seed audit log for 2026-Q3
+            now_year = date.today().year
+            q_str = f"{now_year}-Q3"
+            for d in devices[:3]:
+                db.add(
+                    AuditLog(
+                        device_id=d.id,
+                        auditor_id=admin.id if admin else manager.id,
+                        audit_cycle=q_str,
+                        physical_status=PhysicalAuditStatus.confirmed,
+                        verified_location=d.resident_location or "HQ - Lab",
+                        notes="Physical inspection passed. Serial number and MAC verified.",
+                    )
+                )
+                d.audit_status = AuditStatus.confirmed
+
+            db.commit()
+

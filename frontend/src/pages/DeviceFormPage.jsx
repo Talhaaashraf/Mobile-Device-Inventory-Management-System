@@ -13,8 +13,10 @@ const blank = {
   resident_location: "",
   division: "",
   issued_to: "",
+  issued_to_email: "",
   project_manager: "",
   project_name: "",
+  is_latest_model: false,
   date_of_return: "",
   is_cellular: true,
   imei_number: "",
@@ -55,6 +57,7 @@ export default function DeviceFormPage() {
             project_manager: d.project_manager || "",
             project_name: d.project_name || "",
             date_of_return: d.date_of_return || "",
+            is_latest_model: d.is_latest_model || false,
             is_cellular: d.is_cellular,
             imei_number: d.imei_number || "",
             serial_number: d.serial_number,
@@ -213,7 +216,10 @@ export default function DeviceFormPage() {
         </label>
         <label>
           Issued to (Engineer Name)
-          <input name="issued_to" value={form.issued_to} onChange={onChange} />
+          <div style={{display: 'flex', gap: '8px'}}>
+            <input name="issued_to" value={form.issued_to} onChange={onChange} />
+            <input name="issued_to_email" value={form.issued_to_email} onChange={onChange} placeholder="email@example.com" />
+          </div>
         </label>
         <label>
           Resident location
@@ -230,6 +236,15 @@ export default function DeviceFormPage() {
         <label>
           Project name
           <input name="project_name" value={form.project_name} onChange={onChange} />
+        </label>
+        <label className="checkbox">
+          <input
+            type="checkbox"
+            name="is_latest_model"
+            checked={form.is_latest_model}
+            onChange={onChange}
+          />
+          Mark as Latest Model
         </label>
         <label>
           Date of return

@@ -6,7 +6,9 @@ import DeviceDetailPage from "./pages/DeviceDetailPage";
 import DeviceFormPage from "./pages/DeviceFormPage";
 import DevicesPage from "./pages/DevicesPage";
 import LoginPage from "./pages/LoginPage";
+import ManagementPage from "./pages/ManagementPage";
 import UsersPage from "./pages/UsersPage";
+
 
 function Protected({ children, roles }) {
   const { user, loading } = useAuth();
@@ -47,6 +49,7 @@ export default function App() {
             </Protected>
           }
         />
+        <Route path="management" element={<ManagementPage />} />
         <Route
           path="users"
           element={

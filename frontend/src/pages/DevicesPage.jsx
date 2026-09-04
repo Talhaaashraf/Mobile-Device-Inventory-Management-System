@@ -175,11 +175,19 @@ export default function DevicesPage() {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Name / AKA</th>
                 <th>Type</th>
                 <th>OS</th>
+                <th>OS Version</th>
+                <th>Company Serial</th>
+                <th>IMEI</th>
                 <th>Issued</th>
+                <th>Location</th>
                 <th>Division</th>
                 <th>Audit</th>
+                <th>Project Manager</th>
+                <th>Project Name</th>
+                <th>Date of Return</th>
                 <th>Status</th>
                 <th>Assigned</th>
                 <th>Company</th>
@@ -190,15 +198,28 @@ export default function DevicesPage() {
                 <tr key={d.id}>
                   <td>
                     <Link to={`/devices/${d.id}`}>{d.device_name}</Link>
-                    <div className="muted">{d.device_nickname}</div>
+                  </td>
+                  <td>
+                    <div className="muted">{d.device_nickname || "—"}</div>
                   </td>
                   <td>{labelOf(DEVICE_TYPES, d.device_type)}</td>
+                  <td>{labelOf(OS_TYPES, d.os_type)}</td>
+                  <td>{d.os_version || "—"}</td>
+                  <td>{d.serial_number || "—"}</td>
                   <td>
-                    {labelOf(OS_TYPES, d.os_type)} {d.os_version}
+                    <span className="muted">{d.imei_number || "—"}</span>
                   </td>
                   <td>{d.issued_to || "—"}</td>
+                  <td>
+                    <span className="muted">{d.resident_location || "—"}</span>
+                  </td>
                   <td>{d.division || "—"}</td>
                   <td>{labelOf(AUDIT_STATUSES, d.audit_status) || d.audit_status || "—"}</td>
+                  <td>
+                    <span className="muted">{d.project_manager || "—"}</span>
+                  </td>
+                  <td>{d.project_name || "—"}</td>
+                  <td>{d.date_of_return || "—"}</td>
                   <td>
                     <span className={`pill status-${d.status}`}>{labelOf(STATUSES, d.status)}</span>
                   </td>
@@ -208,7 +229,7 @@ export default function DevicesPage() {
               ))}
               {!devices.length && (
                 <tr>
-                  <td colSpan={9}>No devices match these filters.</td>
+                  <td colSpan={17}>No devices match these filters.</td>
                 </tr>
               )}
             </tbody>

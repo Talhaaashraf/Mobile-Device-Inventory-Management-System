@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, devices, users
+from app.api import auth, devices, management, users
 from app.core.config import settings
 from app.db.base import Base
 from app.db.migrate_sqlite import ensure_sqlite_device_columns
@@ -26,7 +26,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Mobile Device Inventory API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Folio3 Mobile Device IMS API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,6 +39,8 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(devices.router, prefix="/api")
+app.include_router(management.router, prefix="/api")
+
 
 
 @app.get("/health")

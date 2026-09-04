@@ -14,14 +14,15 @@ export default function Layout() {
     <div className="shell">
       <header className="topbar">
         <div className="brand-block">
-          <span className="brand">DeviceLedger</span>
-          <span className="brand-sub">Mobile inventory</span>
+          <span className="brand">Folio3 Mobile Device IMS</span>
+          <span className="brand-sub">Mobile device management</span>
         </div>
         <nav className="nav">
           <NavLink to="/" end>
             Dashboard
           </NavLink>
           <NavLink to="/devices">Devices</NavLink>
+          <NavLink to="/management">Management</NavLink>
           {isAdmin && <NavLink to="/users">Users</NavLink>}
         </nav>
         <div className="user-chip">

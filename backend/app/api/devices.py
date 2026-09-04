@@ -6,9 +6,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
 from app.api.deps import AdminUser, CurrentUser, DbSession, ManagerOrAdmin
+from app.core.config import os_freshness_category
 from app.models.assignment import AssignmentHistory
 from app.models.device import Device
-from app.models.enums import DeviceStatus, DeviceType, OsType
+from app.models.enums import AuditStatus, DeviceStatus, DeviceType, OsType
 from app.models.user import User
 from app.schemas.device import (
     AssignmentHistoryRead,
@@ -17,6 +18,9 @@ from app.schemas.device import (
     DeviceRead,
     DeviceUpdate,
     ImportResult,
+    InStockDeviceItem,
+    InStockSummary,
+    LatestModelItem,
 )
 from app.services.csv_import import import_devices_from_csv
 
@@ -61,29 +65,106 @@ def dashboard_summary(db: DbSession, _: CurrentUser) -> DashboardSummary:
     unassigned = (
         db.scalar(select(func.count()).select_from(Device).where(Device.assigned_user_id.is_(None))) or 0
     )
-
+ 
     by_status = {s.value: 0 for s in DeviceStatus}
     for status_val, count in db.execute(
         select(Device.status, func.count()).group_by(Device.status)
     ).all():
         by_status[status_val.value] = count
-
+ 
+    by_audit_status = {s.value: 0 for s in AuditStatus}
+    for audit_val, count in db.execute(
+        select(Device.audit_status, func.count()).group_by(Device.audit_status)
+    ).all():
+        by_audit_status[audit_val.value] = count
+ 
     by_os = {o.value: 0 for o in OsType}
     for os_val, count in db.execute(select(Device.os_type, func.count()).group_by(Device.os_type)).all():
         by_os[os_val.value] = count
-
+ 
     by_type = {t.value: 0 for t in DeviceType}
     for type_val, count in db.execute(
         select(Device.device_type, func.count()).group_by(Device.device_type)
     ).all():
         by_type[type_val.value] = count
-
+ 
+    by_category = {
+        "iPhone": 0,
+        "iPad": 0,
+        "Android Phone": 0,
+        "Android Tablet": 0,
+        "Smartwatch": 0,
+    }
+    for device_type, os_type, count in db.execute(
+        select(Device.device_type, Device.os_type, func.count()).group_by(Device.device_type, Device.os_type)
+    ).all():
+        if os_type in (OsType.watchos, OsType.wear_os):
+            by_category["Smartwatch"] += count
+        elif device_type == DeviceType.phone and os_type == OsType.ios:
+            by_category["iPhone"] += count
+        elif device_type == DeviceType.tablet_ipad and os_type == OsType.ios:
+            by_category["iPad"] += count
+        elif device_type == DeviceType.phone and os_type == OsType.android:
+            by_category["Android Phone"] += count
+        elif device_type == DeviceType.tablet_android and os_type == OsType.android:
+            by_category["Android Tablet"] += count
+ 
+    freshness_groups = ["Latest", "Recent", "Outdated", "Unknown"]
+    by_os_freshness = {o.value: {group: 0 for group in freshness_groups} for o in OsType}
+    for os_type, os_version in db.execute(select(Device.os_type, Device.os_version)).all():
+        group = os_freshness_category(os_type.value, os_version)
+        if group not in by_os_freshness[os_type.value]:
+            group = "Unknown"
+        by_os_freshness[os_type.value][group] += 1
+ 
+    by_project: dict[str, int] = {}
+    for project_name, count in db.execute(select(Device.project_name, func.count()).group_by(Device.project_name)).all():
+        key = project_name or "Unassigned Project"
+        by_project[key] = count
+ 
+    latest_models = [
+        LatestModelItem(
+            id=device.id,
+            device_name=device.device_name,
+            device_nickname=device.device_nickname,
+            os_type=device.os_type,
+            issued_to=device.issued_to,
+        )
+        for device in db.scalars(
+            select(Device).where(Device.is_latest_model.is_(True)).order_by(Device.created_at.desc())
+        ).all()
+    ]
+ 
+    in_stock_devices = [
+        InStockDeviceItem(
+            id=device.id,
+            device_name=device.device_name,
+            device_type=device.device_type,
+            os_type=device.os_type,
+            serial_number=device.serial_number,
+        )
+        for device in db.scalars(
+            select(Device)
+            .where(
+                or_(Device.issued_to.is_(None), Device.issued_to == ""),
+                Device.status == DeviceStatus.active,
+            )
+            .order_by(Device.device_name.asc())
+        ).all()
+    ]
+ 
     return DashboardSummary(
         total_devices=total,
         unassigned_devices=unassigned,
         by_status=by_status,
         by_os=by_os,
         by_type=by_type,
+        by_category=by_category,
+        by_os_freshness=by_os_freshness,
+        by_project=by_project,
+        by_audit_status=by_audit_status,
+        latest_models=latest_models,
+        in_stock=InStockSummary(count=len(in_stock_devices), list=in_stock_devices),
     )
 
 

@@ -32,3 +32,33 @@ class AuditStatus(str, enum.Enum):
     confirmed = "confirmed"
     pending_audit = "pending_audit"
     disputed = "disputed"
+
+
+class RequestStatus(str, enum.Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+    fulfilled = "fulfilled"
+
+
+class MaintenanceStatus(str, enum.Enum):
+    reported = "reported"
+    in_repair = "in_repair"
+    waiting_parts = "waiting_parts"
+    completed = "completed"
+    unrepairable = "unrepairable"
+
+
+class MaintenancePriority(str, enum.Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
+    critical = "critical"
+
+
+class PhysicalAuditStatus(str, enum.Enum):
+    confirmed = "confirmed"
+    damaged = "damaged"
+    missing = "missing"
+    disputed = "disputed"
+

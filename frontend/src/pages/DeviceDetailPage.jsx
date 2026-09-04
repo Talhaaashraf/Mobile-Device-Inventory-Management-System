@@ -10,16 +10,22 @@ export default function DeviceDetailPage() {
   const { canManage, isAdmin } = useAuth();
   const [device, setDevice] = useState(null);
   const [history, setHistory] = useState([]);
+  const [audits, setAudits] = useState([]);
+  const [tickets, setTickets] = useState([]);
   const [error, setError] = useState("");
 
   const load = async () => {
     try {
-      const [d, h] = await Promise.all([
+      const [d, h, a, t] = await Promise.all([
         api.get(`/devices/${id}`),
         api.get(`/devices/${id}/history`),
+        api.get(`/management/audits?device_id=${id}`),
+        api.get(`/management/maintenance`),
       ]);
       setDevice(d.data);
       setHistory(h.data);
+      setAudits(a.data);
+      setTickets(t.data.filter((tk) => tk.device_id === id));
     } catch (e) {
       setError(e.response?.data?.detail || "Failed to load device");
     }
@@ -41,8 +47,16 @@ export default function DeviceDetailPage() {
     navigate("/devices");
   };
 
+  const quickReturn = async () => {
+    if (!confirm("Confirm device return and check-in back to available inventory?")) return;
+    await api.post(`/management/returns/${id}/return`, { condition: "Good", return_notes: "Processed via Device Detail page" });
+    load();
+  };
+
   if (error) return <p className="error">{error}</p>;
   if (!device) return <p>Loading…</p>;
+
+  const isAssigned = !!(device.assigned_user_id || device.issued_to);
 
   return (
     <section className="page">
@@ -53,6 +67,21 @@ export default function DeviceDetailPage() {
           <p className="lede">{device.device_nickname}</p>
         </div>
         <div className="actions">
+          {canManage && isAssigned && (
+            <button className="btn primary" type="button" onClick={quickReturn}>
+              Process Return
+            </button>
+          )}
+          {canManage && (
+            <Link className="btn secondary" to={`/management?tab=maintenance`}>
+              + Log Repair
+            </Link>
+          )}
+          {canManage && (
+            <Link className="btn secondary" to={`/management?tab=audits`}>
+              🛡️ Audit
+            </Link>
+          )}
           {canManage && (
             <Link className="btn secondary" to={`/devices/${id}/edit`}>
               Edit
@@ -70,6 +99,7 @@ export default function DeviceDetailPage() {
           )}
         </div>
       </div>
+
 
       <div className="grid-2">
         <div className="panel">
@@ -156,6 +186,41 @@ export default function DeviceDetailPage() {
                   by {h.changed_by_user?.full_name || "Unknown"} ·{" "}
                   {new Date(h.created_at).toLocaleString()}
                 </span>
+                {h.notes && <div className="small-muted">{h.notes}</div>}
+              </li>
+            ))}
+          </ul>
+
+          <h2 style={{ marginTop: "1.5rem" }}>Maintenance & Repairs</h2>
+          {!tickets.length && <p className="muted">No maintenance tickets logged for this device.</p>}
+          <ul className="timeline">
+            {tickets.map((t) => (
+              <li key={t.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <strong>{t.issue_title}</strong>
+                  <span className={`pill status-${t.repair_status}`}>{t.repair_status.replace("_", " ")}</span>
+                </div>
+                <span>
+                  Priority: <strong>{t.priority}</strong> · Vendor: {t.vendor_name || "N/A"} · Cost: ${t.actual_cost || t.estimated_cost || 0}
+                </span>
+                {t.technician_notes && <div className="small-muted">{t.technician_notes}</div>}
+              </li>
+            ))}
+          </ul>
+
+          <h2 style={{ marginTop: "1.5rem" }}>Audit Logs</h2>
+          {!audits.length && <p className="muted">No audit verifications recorded yet.</p>}
+          <ul className="timeline">
+            {audits.map((a) => (
+              <li key={a.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <strong>Cycle: {a.audit_cycle}</strong>
+                  <span className={`pill audit-${a.physical_status}`}>{a.physical_status}</span>
+                </div>
+                <span>
+                  Auditor: {a.auditor?.full_name || "Auditor"} · Verified Location: {a.verified_location || "HQ"}
+                </span>
+                {a.notes && <div className="small-muted">{a.notes}</div>}
               </li>
             ))}
           </ul>
@@ -164,3 +229,4 @@ export default function DeviceDetailPage() {
     </section>
   );
 }
+

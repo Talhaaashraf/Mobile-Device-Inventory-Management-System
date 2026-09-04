@@ -28,8 +28,10 @@ class DeviceBase(BaseModel):
     resident_location: str | None = None
     division: str | None = None
     issued_to: str | None = None
+    issued_to_email: str | None = None
     project_manager: str | None = None
     project_name: str | None = None
+    is_latest_model: bool = False
     date_of_return: date | None = None
     notes: str | None = None
     purchase_date: date | None = None
@@ -82,8 +84,10 @@ class DeviceUpdate(BaseModel):
     resident_location: str | None = None
     division: str | None = None
     issued_to: str | None = None
+    issued_to_email: str | None = None
     project_manager: str | None = None
     project_name: str | None = None
+    is_latest_model: bool | None = None
     date_of_return: date | None = None
     notes: str | None = None
     purchase_date: date | None = None
@@ -115,7 +119,7 @@ class DeviceUpdate(BaseModel):
 
 class DeviceRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
+ 
     id: UUID
     device_name: str
     device_nickname: str
@@ -133,14 +137,81 @@ class DeviceRead(BaseModel):
     resident_location: str | None = None
     division: str | None = None
     issued_to: str | None = None
+    issued_to_email: str | None = None
     project_manager: str | None = None
     project_name: str | None = None
+    is_latest_model: bool = False
     date_of_return: date | None = None
     notes: str | None = None
     purchase_date: date | None
     created_at: datetime
     updated_at: datetime
     assigned_user: UserBrief | None = None
+ 
+ 
+class DashboardProjectItem(BaseModel):
+    project_name: str
+    count: int
+ 
+ 
+class LatestModelItem(BaseModel):
+    id: UUID
+    device_name: str
+    device_nickname: str
+    os_type: OsType
+    issued_to: str | None = None
+ 
+ 
+class InStockDeviceItem(BaseModel):
+    id: UUID
+    device_name: str
+    device_type: DeviceType
+    os_type: OsType
+    serial_number: str
+ 
+ 
+class InStockSummary(BaseModel):
+    count: int
+    list: list[InStockDeviceItem]
+ 
+ 
+class DashboardAlertItem(BaseModel):
+    id: UUID
+    title: str
+    subtitle: str
+    type: str  # "overdue", "request", "maintenance"
+    badge: str
+
+
+class DashboardSummary(BaseModel):
+    total_devices: int
+    unassigned_devices: int
+    allocated_devices: int
+    utilization_rate: float
+    by_status: dict[str, int]
+    by_os: dict[str, int]
+    by_type: dict[str, int]
+    by_category: dict[str, int]
+    by_os_freshness: dict[str, dict[str, int]]
+    by_project: dict[str, int]
+    by_division: dict[str, int]
+    by_location: dict[str, int]
+    by_company: dict[str, int]
+    by_purchase_year: dict[str, int]
+    by_audit_status: dict[str, int]
+    apple_count: int
+    android_count: int
+    cellular_count: int
+    wifi_only_count: int
+    pending_requests_count: int
+    overdue_returns_count: int
+    active_repairs_count: int
+    total_repair_expense: float
+    audit_completion_percentage: float
+    urgent_alerts: list[DashboardAlertItem]
+    latest_models: list[LatestModelItem]
+    in_stock: InStockSummary
+
 
 
 class AssignmentHistoryRead(BaseModel):
@@ -164,14 +235,6 @@ class AssignmentHistoryRead(BaseModel):
     from_user: UserBrief | None = None
     to_user: UserBrief | None = None
     changed_by_user: UserBrief | None = None
-
-
-class DashboardSummary(BaseModel):
-    total_devices: int
-    unassigned_devices: int
-    by_status: dict[str, int]
-    by_os: dict[str, int]
-    by_type: dict[str, int]
 
 
 class ImportRowError(BaseModel):

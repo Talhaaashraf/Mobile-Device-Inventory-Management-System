@@ -1,4 +1,42 @@
+from __future__ import annotations
+
+import re
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+LATEST_OS_VERSIONS = {
+    "ios": 18,
+    "android": 15,
+    "watchos": 11,
+    "wear_os": 5,
+}
+
+
+def os_freshness_category(os_type: str | None, os_version: str | None) -> str:
+    if not os_type or not os_version:
+        return "Unknown"
+
+    os_type_key = str(os_type).strip().lower()
+    latest = LATEST_OS_VERSIONS.get(os_type_key)
+    if latest is None:
+        return "Unknown"
+
+    match = re.search(r"(\d+)", os_version)
+    if not match:
+        return "Unknown"
+
+    try:
+        major = int(match.group(1))
+    except ValueError:
+        return "Unknown"
+
+    delta = latest - major
+    if delta <= 0:
+        return "Latest"
+    if delta <= 2:
+        return "Recent"
+    return "Outdated"
 
 
 class Settings(BaseSettings):

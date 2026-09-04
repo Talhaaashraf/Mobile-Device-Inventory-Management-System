@@ -1,4 +1,4 @@
-# Mobile Device Inventory Management System
+# Folio3 Mobile Device IMS
 
 Full-stack inventory tracker for company phones, tablets, and smartwatches.
 

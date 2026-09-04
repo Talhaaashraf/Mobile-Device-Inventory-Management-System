@@ -27,8 +27,8 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-panel">
-        <p className="eyebrow">DeviceLedger</p>
-        <h1>Sign in to inventory</h1>
+        <p className="eyebrow">Folio3 Mobile Device IMS</p>
+        <h1>Sign in to Folio3 Mobile Device IMS</h1>
         <p className="lede">Track phones, tablets, and watches across your teams.</p>
         <form onSubmit={onSubmit} className="stack">
           <label>
