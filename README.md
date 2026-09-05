@@ -113,3 +113,8 @@ npm run dev
 - IMEI is required only when `is_cellular` is true (15 digits).
 - MAC addresses must match `XX:XX:XX:XX:XX:XX` and are stored uppercase.
 - Assignment history is written whenever `assigned_user_id` changes.
+
+## Git–Vercel Practice
+
+Add Git Vercel practice note
+
