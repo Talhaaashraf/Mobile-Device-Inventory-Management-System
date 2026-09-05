@@ -118,3 +118,5 @@ npm run dev
 
 Add Git Vercel practice note
 
+
+CLI practice: this line was added locally.
