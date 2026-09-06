@@ -9,3 +9,5 @@ pgdata/
 *.log
 backend/*.db
 backend/device_inventory.db
+backend/.env
+frontend/.env

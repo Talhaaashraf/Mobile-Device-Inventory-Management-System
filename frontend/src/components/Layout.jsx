@@ -14,8 +14,8 @@ export default function Layout() {
     <div className="shell">
       <header className="topbar">
         <div className="brand-block">
-          <span className="brand">Folio3 Mobile Device IMS</span>
-          <span className="brand-sub">Mobile device management</span>
+          <span className="brand">Mobile Device Management</span>
+          <span className="brand-sub">Inventory & Asset Tracking</span>
         </div>
         <nav className="nav">
           <NavLink to="/" end>

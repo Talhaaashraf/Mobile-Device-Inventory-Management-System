@@ -1440,7 +1440,7 @@ export default function ManagementPage() {
         <div className="modal-backdrop" onClick={() => setClearanceSlip(null)}>
           <div className="modal-box clearance-slip" onClick={(e) => e.stopPropagation()}>
             <div className="receipt-header">
-              <h3>Folio3 IMS - Asset Return Clearance Receipt</h3>
+              <h3>Mobile Device Management - Asset Return Clearance Receipt</h3>
               <p className="small-muted">Reference #{Math.floor(100000 + Math.random() * 900000)}</p>
             </div>
             <div className="receipt-body">

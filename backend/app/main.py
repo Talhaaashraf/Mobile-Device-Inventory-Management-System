@@ -26,7 +26,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Folio3 Mobile Device IMS API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Mobile Device Management API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
